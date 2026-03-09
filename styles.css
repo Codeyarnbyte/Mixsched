@@ -602,10 +602,19 @@ div[style*="margin: 10px 0;"] {
     padding: 4px;
   }
 
-  .status-select {
+  .status-select,
+  .pic-select,
+  .event-select,
+  .include-select {
     appearance: none;
     border: none;
     background: transparent;
+    pointer-events: none;
+  }
+
+  #printTableBtn,
+  #exportExcelBtn {
+    display: none !important;
   }
 }
 

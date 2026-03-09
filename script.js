@@ -88,6 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const dateResetBtn = document.getElementById("dateResetBtn");
 
   const exportBtn = document.getElementById("exportData");
+  const exportExcelBtn = document.getElementById("exportExcelBtn");
+  const printTableBtn = document.getElementById("printTableBtn");
   const importBtn = document.getElementById("importBtn");
   const importInput = document.getElementById("importData");
 
@@ -200,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function applyRolePermissions() {
     if (!isUserMode) return;
 
-    [addModelBtn, removeModelBtn, addEventBtn, removeEventBtn, addRowBtn, deleteRowBtn, clearDataBtn, exportBtn, importBtn, enableBlockSelect].forEach(el => {
+    [addModelBtn, removeModelBtn, addEventBtn, removeEventBtn, addRowBtn, deleteRowBtn, clearDataBtn, exportBtn, exportExcelBtn, printTableBtn, importBtn, enableBlockSelect].forEach(el => {
       if (!el) return;
       el.disabled = true;
       el.style.display = "none";
@@ -1256,6 +1258,18 @@ document.addEventListener("DOMContentLoaded", () => {
     applyFilters();
   });
 
+
+  function cloneTableWithDisplayValues() {
+    const clone = document.getElementById("mainTable").cloneNode(true);
+    clone.querySelectorAll("select").forEach(select => {
+      const text = select.options[select.selectedIndex]?.textContent?.trim() || select.value || "—";
+      const span = document.createElement("span");
+      span.textContent = text;
+      select.replaceWith(span);
+    });
+    return clone;
+  }
+
   /* ================= EXPORT / IMPORT ================= */
   exportBtn.onclick = () => {
     if (isUserMode) return;
@@ -1270,6 +1284,25 @@ document.addEventListener("DOMContentLoaded", () => {
     a.download = `${selectedMaker}_NPRA.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+  };
+
+  exportExcelBtn.onclick = () => {
+    if (isUserMode) return;
+    if (!STORAGE_KEY) return alert("Add/select a model first.");
+
+    const tableClone = cloneTableWithDisplayValues();
+    const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>${tableClone.outerHTML}</body></html>`;
+    const blob = new Blob([html], { type: "application/vnd.ms-excel" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${selectedMaker}_${currentModel || "MODEL"}_NPRA.xls`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  printTableBtn.onclick = () => {
+    if (isUserMode) return;
+    window.print();
   };
 
   importBtn.onclick = () => {
