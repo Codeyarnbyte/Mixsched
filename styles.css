@@ -856,3 +856,29 @@ td, th {
 #mainTable th {
   background: #e2e8f0 !important;
 }
+
+.access-badge {
+  width: fit-content;
+  margin: -8px 0 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+}
+
+.access-badge.admin {
+  background: #e8f1ff;
+  color: #0b66c3;
+}
+
+.access-badge.user {
+  background: #fff4e5;
+  color: #b45309;
+}
+
+.readonly-select {
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}

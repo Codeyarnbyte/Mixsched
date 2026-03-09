@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const importAllDataInput = document.getElementById("importAllDataInput");
   const goHomeBtn = document.getElementById("goHomeBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  const accessIndicator = document.getElementById("accessIndicator");
 
   function getModelsKey(maker) {
     return `NPRA_MODELS_${maker}`;
@@ -121,6 +122,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
+
+  function renderAccessIndicator() {
+    if (!accessIndicator) return;
+    accessIndicator.textContent = `Access: ${isUser ? "USER" : "ADMIN"}`;
+    accessIndicator.classList.toggle("user", isUser);
+    accessIndicator.classList.toggle("admin", !isUser);
+  }
+
   if (isUser) {
     exportAllDataBtn?.setAttribute("hidden", "hidden");
     importAllDataBtn?.setAttribute("hidden", "hidden");
@@ -172,6 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.setItem(key, typeof value === "string" ? value : "");
         });
 
+        renderAccessIndicator();
         renderDashboard();
         alert("All makers/model data imported successfully.");
       } catch (error) {
@@ -197,6 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.Auth?.logout?.();
   });
 
+  renderAccessIndicator();
   renderDashboard();
 
   window.addEventListener("storage", renderDashboard);

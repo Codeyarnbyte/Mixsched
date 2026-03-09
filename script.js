@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const goPicSummaryBtn = document.getElementById("goPicSummaryBtn");
   const goHomeBtn = document.getElementById("goHomeBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  const accessBadge = document.getElementById("accessBadge");
 
   function getModelsKey(maker) {
     return `NPRA_MODELS_${maker}`;
@@ -179,6 +180,23 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
+  function updateAccessBadge() {
+    if (!accessBadge) return;
+    const label = isUserMode ? "USER" : "ADMIN";
+    accessBadge.textContent = `Access: ${label}`;
+    accessBadge.classList.toggle("user", isUserMode);
+    accessBadge.classList.toggle("admin", !isUserMode);
+  }
+
+  function applyUserReadOnlyColumnPermissions() {
+    if (!isUserMode) return;
+
+    document.querySelectorAll(".event-select, .pic-select, .include-select").forEach(select => {
+      select.disabled = true;
+      select.classList.add("readonly-select");
+    });
+  }
+
   function applyRolePermissions() {
     if (!isUserMode) return;
 
@@ -189,7 +207,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (importInput) importInput.disabled = true;
-    if (eventSelect) eventSelect.disabled = true;
   }
 
   function renderModelOptions() {
@@ -680,6 +697,7 @@ document.addEventListener("DOMContentLoaded", () => {
     normalizeAndHydrateEventCells();
     normalizeAndHydrateIncludeCells();
     normalizeCountermeasureCells();
+    applyUserReadOnlyColumnPermissions();
 
     document.querySelectorAll(".status-select").forEach(select => {
       hydrateStatusSelect(select);
@@ -1292,6 +1310,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* ================= MODEL CONTROLS ================= */
+  updateAccessBadge();
   renderModelOptions();
   renderEventOptions();
   applyRolePermissions();

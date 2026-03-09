@@ -266,3 +266,23 @@ h1 {
 .summary-table td {
   border: 1.5px solid #334155;
 }
+
+.access-indicator {
+  width: fit-content;
+  margin: -12px auto 20px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.access-indicator.admin {
+  background: #e8f1ff;
+  color: #0b66c3;
+}
+
+.access-indicator.user {
+  background: #fff4e5;
+  color: #b45309;
+}
