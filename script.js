@@ -407,7 +407,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function askEvidenceIfNeeded(select) {
-    if (!isResolvedStatus(select.value)) {
+    if (!isUserMode || !isResolvedStatus(select.value)) {
       select.dataset.evidence = "";
       return;
     }
@@ -1165,7 +1165,6 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ================= STATUS CHANGE ================= */
   document.addEventListener("change", e => {
     if (e.target.classList.contains("status-select")) {
-      if (isUserMode) return;
       const allowed = ["Open", "Closed", "Close", "Cancelled", "Rejected", "—"];
       e.target.value = normalizeStatus(e.target.value);
       if (!allowed.includes(e.target.value)) e.target.value = "Open";
