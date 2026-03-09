@@ -357,16 +357,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ================= STATUS COLOR ================= */
+  function getStatusColor(status) {
+    if (status === "Open") return "#f8d7da";
+    if (status === "Closed") return "#d4edda";
+    if (status === "Cancelled") return "#fff3cd";
+    if (status === "Rejected") return "#f5c6cb";
+    return "";
+  }
+
   function applyStatusLogic(select) {
     const td = select.closest("td");
-    const val = select.value;
+    if (!td) return;
 
-    td.style.backgroundColor =
-      val === "Open" ? "#f8d7da" :
-      val === "Closed" ? "#d4edda" :
-      val === "Cancelled" ? "#fff3cd" :
-      val === "Rejected" ? "#f5c6cb" :
-      "";
+    const color = getStatusColor(select.value);
+    td.style.backgroundColor = color;
+    select.style.backgroundColor = color;
   }
 
   function hydrateStatusSelect(select) {
@@ -377,6 +382,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const savedStatus = normalizeStatus(select.dataset.status || select.value);
+    if (!select.dataset.evidence && select.dataset.reason) {
+      select.dataset.evidence = select.dataset.reason;
+    }
     if (savedStatus) {
       select.value = savedStatus;
     }
@@ -387,31 +395,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const td = select.closest("td");
     if (!td) return;
 
-    const reason = (select.dataset.reason || "").trim();
-    if (["Cancelled", "Rejected"].includes(select.value) && reason) {
-      td.title = `${select.value} reason: ${reason}`;
-    } else if (["Cancelled", "Rejected"].includes(select.value)) {
-      td.title = `${select.value} reason: (not provided)`;
+    const evidence = (select.dataset.evidence || "").trim();
+    if (isResolvedStatus(select.value) && evidence) {
+      td.title = `${select.value} evidence: ${evidence}`;
+    } else if (isResolvedStatus(select.value)) {
+      td.title = `${select.value} evidence: (not provided)`;
     } else {
       td.title = "";
-      select.dataset.reason = "";
+      select.dataset.evidence = "";
     }
   }
 
-  function askReasonIfNeeded(select) {
-    if (!["Cancelled", "Rejected"].includes(select.value)) {
-      select.dataset.reason = "";
+  function askEvidenceIfNeeded(select) {
+    if (!isResolvedStatus(select.value)) {
+      select.dataset.evidence = "";
       return;
     }
 
-    const current = select.dataset.reason || "";
-    const entered = prompt(`Enter reason for ${select.value}:`, current);
-    if (entered === null) {
+    const current = select.dataset.evidence || "";
+    const entered = prompt(`Provide evidence for ${select.value}:`, current);
+    const evidence = (entered || "").trim();
+
+    if (!evidence) {
+      alert(`Evidence is required when status is ${select.value}.`);
       select.value = "Open";
-      select.dataset.reason = "";
-    } else {
-      select.dataset.reason = entered.trim();
+      select.dataset.evidence = "";
+      return;
     }
+
+    select.dataset.evidence = evidence;
   }
 
   function isResolvedStatus(status) {
@@ -527,7 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".status-select").forEach(select => {
       select.value = normalizeStatus(select.value);
       select.dataset.status = select.value;
-      select.dataset.reason = select.dataset.reason || "";
+      select.dataset.evidence = select.dataset.evidence || "";
       [...select.options].forEach(opt => {
         opt.selected = opt.value === select.value;
       });
@@ -1158,7 +1170,7 @@ document.addEventListener("DOMContentLoaded", () => {
       e.target.value = normalizeStatus(e.target.value);
       if (!allowed.includes(e.target.value)) e.target.value = "Open";
 
-      askReasonIfNeeded(e.target);
+      askEvidenceIfNeeded(e.target);
       e.target.dataset.status = e.target.value;
       applyStatusLogic(e.target);
       updateStatusReasonUI(e.target);
