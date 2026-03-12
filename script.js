@@ -201,10 +201,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function applyUserColumnVisibility() {
-    if (!isUserMode) return;
-    document.querySelectorAll(".w-pfmea, .w-qcp, .pfmea-cell, .qcp-cell").forEach(el => {
-      el.style.display = "none";
-    });
+    document.body.classList.toggle("user-mode", isUserMode);
+    document.body.classList.toggle("admin-mode", !isUserMode);
   }
 
   function applyRolePermissions() {

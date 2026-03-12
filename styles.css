@@ -893,3 +893,11 @@ td, th {
   color: #6b7280;
   cursor: not-allowed;
 }
+
+
+body.user-mode .w-pfmea,
+body.user-mode .w-qcp,
+body.user-mode .pfmea-cell,
+body.user-mode .qcp-cell {
+  display: none !important;
+}
