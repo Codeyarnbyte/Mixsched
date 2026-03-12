@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const goHomeBtn = document.getElementById("goHomeBtn");
   const logoutBtn = document.getElementById("logoutBtn");
   const accessIndicator = document.getElementById("accessIndicator");
+  const dueNotice = document.getElementById("dueNotice");
 
   function getModelsKey(maker) {
     return `NPRA_MODELS_${maker}`;
@@ -54,8 +55,22 @@ document.addEventListener("DOMContentLoaded", () => {
     return option ? (option.value || option.textContent.trim()) : fallback;
   }
 
+  function parseDateOnly(value) {
+    if (!value) return null;
+    const d = new Date(value);
+    if (isNaN(d)) return null;
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function isResolvedStatus(status) {
+    return ["Closed", "Cancelled", "Rejected"].includes(status);
+  }
+
   function getStatusCountByMaker(maker) {
-    const count = { Open: 0, Closed: 0, Cancelled: 0, Rejected: 0 };
+    const count = { Open: 0, Closed: 0, Cancelled: 0, Rejected: 0, Due: 0 };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     const models = getMakerModels(maker);
     models.forEach(model => {
@@ -71,10 +86,26 @@ document.addEventListener("DOMContentLoaded", () => {
         if (val === "Close") val = "Closed";
         if (count.hasOwnProperty(val)) count[val]++;
       });
+
+      temp.querySelectorAll("tr").forEach(row => {
+        const statusSelect = row.querySelector(".status-select");
+        const targetDateCell = row.querySelector(".target-date");
+        if (!statusSelect || !targetDateCell) return;
+
+        let status = getSelectValue(statusSelect, "status", statusSelect.value || "Open");
+        if (status === "Close") status = "Closed";
+        if (isResolvedStatus(status)) return;
+
+        const targetDate = parseDateOnly(targetDateCell.dataset.raw || "");
+        if (!targetDate) return;
+
+        if (targetDate <= today) count.Due++;
+      });
     });
 
     return count;
   }
+
 
   function buildMakerCard(maker) {
     const status = getStatusCountByMaker(maker);
@@ -88,6 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="status-row close"><span>CLOSED</span><strong>${status.Closed}</strong></div>
       <div class="status-row cancelled"><span>CANCELLED</span><strong>${status.Cancelled}</strong></div>
       <div class="status-row rejected"><span>REJECTED</span><strong>${status.Rejected}</strong></div>
+      <div class="status-row due"><span>DUE ITEMS</span><strong>${status.Due}</strong></div>
     `;
 
     card.addEventListener("click", () => {
@@ -130,6 +162,18 @@ document.addEventListener("DOMContentLoaded", () => {
     accessIndicator.classList.toggle("admin", !isUser);
   }
 
+  function renderDueNotice() {
+    if (!dueNotice) return;
+    const totalDue = makers.reduce((sum, maker) => sum + getStatusCountByMaker(maker).Due, 0);
+    if (totalDue > 0) {
+      dueNotice.hidden = false;
+      dueNotice.textContent = `⚠️ ${totalDue} item(s) are already due based on target date.`;
+    } else {
+      dueNotice.hidden = false;
+      dueNotice.textContent = "✅ No overdue target-date items.";
+    }
+  }
+
   if (isUser) {
     exportAllDataBtn?.setAttribute("hidden", "hidden");
     importAllDataBtn?.setAttribute("hidden", "hidden");
@@ -139,6 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
     makerGrid.innerHTML = "";
     makers.forEach(maker => makerGrid.appendChild(buildMakerCard(maker)));
     makerGrid.appendChild(buildSummaryCard());
+    renderDueNotice();
   }
 
   function exportAllMakersData() {

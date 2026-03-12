@@ -605,7 +605,8 @@ div[style*="margin: 10px 0;"] {
   .status-select,
   .pic-select,
   .event-select,
-  .include-select {
+  .pfmea-select,
+  .qcp-select {
     appearance: none;
     border: none;
     background: transparent;
@@ -674,7 +675,8 @@ div[style*="margin: 10px 0;"] {
 }
 
 .event-select,
-.include-select {
+.pfmea-select,
+  .qcp-select {
   width: 100%;
   border: none;
   background: transparent;

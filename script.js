@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "eed final assy", "Final ect", "md", "pd pc event", "mm and eq", "—"
   ];
 
-  const INCLUDE_OPTIONS = ["For Include", "Not Included"];
+  const INCLUSION_OPTIONS = ["—", "already included"];
   const PROCESS_OPTIONS = [
     "01 Warehouse Parts Storage, Withdrawal",
     "05 Waterproof rubber plug insertion (Tsumesen)",
@@ -149,9 +149,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return value;
   }
 
-  function normalizeInclude(value) {
-    if (value === "Include") return "For Include";
-    if (value === "Not Include") return "Not Included";
+  function normalizeInclusion(value) {
+    if (value === "For Include" || value === "Include") return "already included";
+    if (value === "Not Included" || value === "Not Include") return "—";
     return value;
   }
 
@@ -173,12 +173,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return `<select class="event-select" data-event="${selected}">${options}</select>`;
   }
 
-  function createIncludeSelectHTML(selected = "For Include") {
-    const options = INCLUDE_OPTIONS.map(v => {
+  function createInclusionSelectHTML(className, dataKey, selected = "—") {
+    const options = INCLUSION_OPTIONS.map(v => {
       const selectedAttr = v === selected ? " selected" : "";
       return `<option value="${v}"${selectedAttr}>${v}</option>`;
     }).join("");
-    return `<select class="include-select" data-include="${selected}">${options}</select>`;
+    return `<select class="${className}" data-${dataKey}="${selected}">${options}</select>`;
   }
 
 
@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function applyUserReadOnlyColumnPermissions() {
     if (!isUserMode) return;
 
-    document.querySelectorAll(".event-select, .pic-select, .include-select").forEach(select => {
+    document.querySelectorAll(".event-select, .pic-select, .pfmea-select, .qcp-select").forEach(select => {
       select.disabled = true;
       select.classList.add("readonly-select");
     });
@@ -202,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function applyRolePermissions() {
     if (!isUserMode) return;
 
-    [addModelBtn, removeModelBtn, addEventBtn, removeEventBtn, addRowBtn, deleteRowBtn, clearDataBtn, exportBtn, exportExcelBtn, printTableBtn, importBtn, enableBlockSelect].forEach(el => {
+    [addModelBtn, removeModelBtn, addEventBtn, removeEventBtn, addRowBtn, deleteRowBtn, clearDataBtn, exportBtn, printTableBtn, importBtn, enableBlockSelect].forEach(el => {
       if (!el) return;
       el.disabled = true;
       el.style.display = "none";
@@ -569,12 +569,13 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    document.querySelectorAll(".include-select").forEach(select => {
-      const persisted = normalizeInclude(select.dataset.include || select.value);
-      if (INCLUDE_OPTIONS.includes(persisted)) {
+    document.querySelectorAll(".pfmea-select, .qcp-select").forEach(select => {
+      const key = select.classList.contains("pfmea-select") ? "pfmea" : "qcp";
+      const persisted = normalizeInclusion(select.dataset[key] || select.value);
+      if (INCLUSION_OPTIONS.includes(persisted)) {
         select.value = persisted;
       }
-      select.dataset.include = select.value;
+      select.dataset[key] = select.value;
       [...select.options].forEach(opt => {
         opt.selected = opt.value === select.value;
       });
@@ -584,7 +585,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function normalizeAndHydratePicCells() {
     document.querySelectorAll(".status-cell").forEach(statusCell => {
       let picCell = statusCell.previousElementSibling;
-      while (picCell && (picCell.classList.contains("date-cell") || picCell.classList.contains("include-cell"))) {
+      while (picCell && picCell.classList.contains("date-cell")) {
         picCell = picCell.previousElementSibling;
       }
       if (!picCell) return;
@@ -652,38 +653,70 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function normalizeAndHydrateIncludeCells() {
+  function normalizeAndHydrateEndColumns() {
     document.querySelectorAll(".status-cell").forEach(statusCell => {
-      const targetDateCell = statusCell.previousElementSibling;
-      if (!targetDateCell || !targetDateCell.classList.contains("date-cell")) return;
+      const row = statusCell.closest("tr");
+      if (!row) return;
 
-      let includeCell = targetDateCell.previousElementSibling;
-      if (!includeCell || !includeCell.classList.contains("include-cell")) {
-        includeCell = document.createElement("td");
-        includeCell.className = "include-cell";
-        targetDateCell.parentNode.insertBefore(includeCell, targetDateCell);
+      const legacyIncludeCell = row.querySelector(".include-cell");
+      if (legacyIncludeCell) legacyIncludeCell.remove();
+
+      let recoveryCell = statusCell.nextElementSibling;
+      if (!recoveryCell || !recoveryCell.classList.contains("recovery-date")) {
+        recoveryCell = document.createElement("td");
+        recoveryCell.className = "date-cell recovery-date";
+        recoveryCell.dataset.raw = "";
+        recoveryCell.textContent = "—";
+        statusCell.parentNode.insertBefore(recoveryCell, statusCell.nextElementSibling);
       }
 
-      if (!includeCell.querySelector(".include-select")) {
-        const raw = (includeCell.textContent || "").trim();
-        const normalizedRaw = normalizeInclude(raw);
-        const selected = INCLUDE_OPTIONS.includes(normalizedRaw) ? normalizedRaw : "For Include";
-        includeCell.innerHTML = createIncludeSelectHTML(selected);
+      let dateClosedCell = recoveryCell.nextElementSibling;
+      if (!dateClosedCell || !dateClosedCell.classList.contains("date-closed-cell")) {
+        dateClosedCell = document.createElement("td");
+        dateClosedCell.className = "date-cell date-closed-cell";
+        dateClosedCell.dataset.raw = "";
+        dateClosedCell.textContent = "—";
+        recoveryCell.parentNode.insertBefore(dateClosedCell, recoveryCell.nextElementSibling);
       }
 
-      const select = includeCell.querySelector(".include-select");
-      if (!select) return;
-
-      const saved = normalizeInclude(select.dataset.include);
-      if (saved && INCLUDE_OPTIONS.includes(saved)) {
-        select.value = saved;
+      let pfmeaCell = dateClosedCell.nextElementSibling;
+      if (!pfmeaCell || !pfmeaCell.classList.contains("pfmea-cell")) {
+        pfmeaCell = document.createElement("td");
+        pfmeaCell.className = "pfmea-cell";
+        dateClosedCell.parentNode.insertBefore(pfmeaCell, dateClosedCell.nextElementSibling);
       }
 
-      select.value = normalizeInclude(select.value);
-      if (!INCLUDE_OPTIONS.includes(select.value)) {
-        select.value = "For Include";
+      let qcpCell = pfmeaCell.nextElementSibling;
+      if (!qcpCell || !qcpCell.classList.contains("qcp-cell")) {
+        qcpCell = document.createElement("td");
+        qcpCell.className = "qcp-cell";
+        pfmeaCell.parentNode.insertBefore(qcpCell, pfmeaCell.nextElementSibling);
       }
-      select.dataset.include = select.value;
+
+      if (!pfmeaCell.querySelector(".pfmea-select")) {
+        const raw = normalizeInclusion((pfmeaCell.textContent || "").trim()) || "—";
+        const selected = INCLUSION_OPTIONS.includes(raw) ? raw : "—";
+        pfmeaCell.innerHTML = createInclusionSelectHTML("pfmea-select", "pfmea", selected);
+      }
+
+      if (!qcpCell.querySelector(".qcp-select")) {
+        const raw = normalizeInclusion((qcpCell.textContent || "").trim()) || "—";
+        const selected = INCLUSION_OPTIONS.includes(raw) ? raw : "—";
+        qcpCell.innerHTML = createInclusionSelectHTML("qcp-select", "qcp", selected);
+      }
+
+      const pfmeaSelect = pfmeaCell.querySelector(".pfmea-select");
+      const qcpSelect = qcpCell.querySelector(".qcp-select");
+      if (pfmeaSelect) {
+        const saved = normalizeInclusion(pfmeaSelect.dataset.pfmea || pfmeaSelect.value);
+        pfmeaSelect.value = INCLUSION_OPTIONS.includes(saved) ? saved : "—";
+        pfmeaSelect.dataset.pfmea = pfmeaSelect.value;
+      }
+      if (qcpSelect) {
+        const saved = normalizeInclusion(qcpSelect.dataset.qcp || qcpSelect.value);
+        qcpSelect.value = INCLUSION_OPTIONS.includes(saved) ? saved : "—";
+        qcpSelect.dataset.qcp = qcpSelect.value;
+      }
     });
   }
 
@@ -709,7 +742,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tagDateCellTypes();
     normalizeAndHydratePicCells();
     normalizeAndHydrateEventCells();
-    normalizeAndHydrateIncludeCells();
+    normalizeAndHydrateEndColumns();
     normalizeCountermeasureCells();
     applyUserReadOnlyColumnPermissions();
 
@@ -906,6 +939,25 @@ document.addEventListener("DOMContentLoaded", () => {
     clearSummaryTarget();
   }
 
+
+  function setDateClosedForRow(row, status, previousStatus = "") {
+    if (!row) return;
+    const dateClosedCell = row.querySelector(".date-closed-cell");
+    if (!dateClosedCell) return;
+
+    if (status === "Closed") {
+      if (previousStatus !== "Closed" || !dateClosedCell.dataset.raw) {
+        const todayRaw = new Date().toISOString().slice(0, 10);
+        dateClosedCell.dataset.raw = todayRaw;
+        dateClosedCell.textContent = formatDate(todayRaw);
+      }
+      return;
+    }
+
+    dateClosedCell.dataset.raw = "";
+    dateClosedCell.textContent = "—";
+  }
+
   /* ================= ADD BLOCK ================= */
   addRowBtn.addEventListener("click", () => {
     if (isUserMode) return;
@@ -926,7 +978,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <option value="—">—</option>
       </select>`;
     const picHTML = createPicSelectHTML();
-    const includeHTML = createIncludeSelectHTML("For Include");
+    const pfmeaHTML = createInclusionSelectHTML("pfmea-select", "pfmea", "—");
+    const qcpHTML = createInclusionSelectHTML("qcp-select", "qcp", "—");
 
     for (let i = 0; i < 4; i++) {
       const tr = document.createElement("tr");
@@ -940,17 +993,21 @@ document.addEventListener("DOMContentLoaded", () => {
         <td rowspan="4">—</td>
         <td rowspan="2" class="vertical-text">OCCURRENCE</td>
         <td>—</td><td class="pic-cell">${picHTML}</td>
-        <td class="include-cell">${includeHTML}</td>
         <td class="date-cell target-date" data-raw="">—</td>
         <td class="status-cell">${statusHTML}</td>
         <td class="date-cell recovery-date" data-raw="">—</td>
+        <td class="date-cell date-closed-cell" data-raw="">—</td>
+        <td class="pfmea-cell">${pfmeaHTML}</td>
+        <td class="qcp-cell">${qcpHTML}</td>
       ` : `
         ${i === 2 ? `<td rowspan="2" class="vertical-text">OUTFLOW</td>` : ""}
         <td>—</td><td class="pic-cell">${picHTML}</td>
-        <td class="include-cell">${includeHTML}</td>
         <td class="date-cell target-date" data-raw="">—</td>
         <td class="status-cell">${statusHTML}</td>
         <td class="date-cell recovery-date" data-raw="">—</td>
+        <td class="date-cell date-closed-cell" data-raw="">—</td>
+        <td class="pfmea-cell">${pfmeaHTML}</td>
+        <td class="qcp-cell">${qcpHTML}</td>
       `;
       mainTableBody.appendChild(tr);
     }
@@ -1167,11 +1224,13 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ================= STATUS CHANGE ================= */
   document.addEventListener("change", e => {
     if (e.target.classList.contains("status-select")) {
+      const previousStatus = normalizeStatus(e.target.dataset.status || "Open");
       const allowed = ["Open", "Closed", "Close", "Cancelled", "Rejected", "—"];
       e.target.value = normalizeStatus(e.target.value);
       if (!allowed.includes(e.target.value)) e.target.value = "Open";
 
       askEvidenceIfNeeded(e.target);
+      setDateClosedForRow(e.target.closest("tr"), e.target.value, previousStatus);
       e.target.dataset.status = e.target.value;
       applyStatusLogic(e.target);
       updateStatusReasonUI(e.target);
@@ -1197,11 +1256,12 @@ document.addEventListener("DOMContentLoaded", () => {
       applyFilters();
     }
 
-    if (e.target.classList.contains("include-select")) {
+    if (e.target.classList.contains("pfmea-select") || e.target.classList.contains("qcp-select")) {
       if (isUserMode) return;
-      e.target.value = normalizeInclude(e.target.value);
-      if (!INCLUDE_OPTIONS.includes(e.target.value)) e.target.value = "For Include";
-      e.target.dataset.include = e.target.value;
+      const key = e.target.classList.contains("pfmea-select") ? "pfmea" : "qcp";
+      e.target.value = normalizeInclusion(e.target.value);
+      if (!INCLUSION_OPTIONS.includes(e.target.value)) e.target.value = "—";
+      e.target.dataset[key] = e.target.value;
       saveTable();
       applyFilters();
     }
@@ -1287,7 +1347,6 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   exportExcelBtn.onclick = () => {
-    if (isUserMode) return;
     if (!STORAGE_KEY) return alert("Add/select a model first.");
 
     const tableClone = cloneTableWithDisplayValues();

@@ -286,3 +286,17 @@ h1 {
   background: #fff4e5;
   color: #b45309;
 }
+
+
+.status-row.due strong { color: #b45309; }
+
+.due-notice {
+  margin: -8px auto 16px;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+  font-weight: 600;
+}
