@@ -192,11 +192,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function applyUserReadOnlyColumnPermissions() {
-    if (!isUserMode) return;
-
     document.querySelectorAll(".event-select, .pic-select, .pfmea-select, .qcp-select").forEach(select => {
-      select.disabled = true;
-      select.classList.add("readonly-select");
+      const shouldDisable = isUserMode;
+      select.disabled = shouldDisable;
+      select.classList.toggle("readonly-select", shouldDisable);
     });
   }
 
