@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.getElementById("logoutBtn");
   const accessIndicator = document.getElementById("accessIndicator");
   const dueNotice = document.getElementById("dueNotice");
+  const duePicSearch = document.getElementById("duePicSearch");
 
   function getModelsKey(maker) {
     return `NPRA_MODELS_${maker}`;
@@ -67,10 +68,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return ["Closed", "Cancelled", "Rejected"].includes(status);
   }
 
-  function getStatusCountByMaker(maker) {
+  function getStatusCountByMaker(maker, picQuery = "") {
     const count = { Open: 0, Closed: 0, Cancelled: 0, Rejected: 0, Due: 0 };
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const normalizedPicQuery = (picQuery || "").trim().toLowerCase();
 
     const models = getMakerModels(maker);
     models.forEach(model => {
@@ -90,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
       temp.querySelectorAll("tr").forEach(row => {
         const statusSelect = row.querySelector(".status-select");
         const targetDateCell = row.querySelector(".target-date");
+        const picSelect = row.querySelector(".pic-select");
         if (!statusSelect || !targetDateCell) return;
 
         let status = getSelectValue(statusSelect, "status", statusSelect.value || "Open");
@@ -97,14 +100,26 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isResolvedStatus(status)) return;
 
         const targetDate = parseDateOnly(targetDateCell.dataset.raw || "");
-        if (!targetDate) return;
+        if (!targetDate || targetDate > today) return;
 
-        if (targetDate <= today) count.Due++;
+        if (normalizedPicQuery) {
+          const picValue = ((getSelectValue(picSelect, "pic", picSelect?.value || "") || "").trim()).toLowerCase();
+          if (!picValue.includes(normalizedPicQuery)) return;
+        }
+
+        count.Due++;
       });
     });
 
     return count;
   }
+
+  function getDueByMaker(picQuery = "") {
+    return makers
+      .map(maker => ({ maker, due: getStatusCountByMaker(maker, picQuery).Due }))
+      .filter(entry => entry.due > 0);
+  }
+
 
 
   function buildMakerCard(maker) {
@@ -164,13 +179,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderDueNotice() {
     if (!dueNotice) return;
-    const totalDue = makers.reduce((sum, maker) => sum + getStatusCountByMaker(maker).Due, 0);
+
+    const picQuery = (duePicSearch?.value || "").trim();
+    const dueByMaker = getDueByMaker(picQuery);
+    const totalDue = dueByMaker.reduce((sum, entry) => sum + entry.due, 0);
+
+    dueNotice.hidden = false;
     if (totalDue > 0) {
-      dueNotice.hidden = false;
-      dueNotice.textContent = `⚠️ ${totalDue} item(s) are already due based on target date.`;
+      const makerSummary = dueByMaker.map(entry => `${entry.maker} (${entry.due})`).join(", ");
+      const picPart = picQuery ? ` for PIC containing "${picQuery}"` : "";
+      dueNotice.textContent = `⚠️ ${totalDue} due item(s)${picPart}. Makers: ${makerSummary}.`;
     } else {
-      dueNotice.hidden = false;
-      dueNotice.textContent = "✅ No overdue target-date items.";
+      const picPart = picQuery ? ` for PIC containing "${picQuery}"` : "";
+      dueNotice.textContent = `✅ No overdue target-date items${picPart}.`;
     }
   }
 
@@ -254,6 +275,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderAccessIndicator();
   renderDashboard();
+
+  duePicSearch?.addEventListener("input", () => {
+    renderDueNotice();
+  });
+
 
   window.addEventListener("storage", renderDashboard);
   document.addEventListener("visibilitychange", () => {

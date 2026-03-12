@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "eed final assy", "Final ect", "md", "pd pc event", "mm and eq", "—"
   ];
 
-  const INCLUSION_OPTIONS = ["—", "already included"];
+  const INCLUSION_OPTIONS = ["—", "for inclusion", "already included"];
   const PROCESS_OPTIONS = [
     "01 Warehouse Parts Storage, Withdrawal",
     "05 Waterproof rubber plug insertion (Tsumesen)",
@@ -150,8 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function normalizeInclusion(value) {
-    if (value === "For Include" || value === "Include") return "already included";
+    if (value === "For Include" || value === "Include") return "for inclusion";
     if (value === "Not Included" || value === "Not Include") return "—";
+    if (value === "For inclusion") return "for inclusion";
     return value;
   }
 
@@ -971,11 +972,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const statusHTML = `
       <select class="status-select">
+        <option value="—" selected>—</option>
         <option value="Open">Open</option>
         <option value="Closed">Closed</option>
         <option value="Cancelled">Cancelled</option>
         <option value="Rejected">Rejected</option>
-        <option value="—">—</option>
       </select>`;
     const picHTML = createPicSelectHTML();
     const pfmeaHTML = createInclusionSelectHTML("pfmea-select", "pfmea", "—");
@@ -1185,7 +1186,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("dblclick", e => {
     const td = e.target.closest(".date-cell");
     if (!td || td.querySelector("input")) return;
-    if (isUserMode && !(td.classList.contains("target-date") || td.classList.contains("recovery-date"))) return;
+    if (isUserMode && !td.classList.contains("recovery-date")) return;
 
     const input = document.createElement("input");
     input.type = "date";
