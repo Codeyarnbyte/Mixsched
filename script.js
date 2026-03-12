@@ -200,6 +200,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function applyUserColumnVisibility() {
+    if (!isUserMode) return;
+    document.querySelectorAll(".w-pfmea, .w-qcp, .pfmea-cell, .qcp-cell").forEach(el => {
+      el.style.display = "none";
+    });
+  }
+
   function applyRolePermissions() {
     if (!isUserMode) return;
 
@@ -746,6 +753,7 @@ document.addEventListener("DOMContentLoaded", () => {
     normalizeAndHydrateEndColumns();
     normalizeCountermeasureCells();
     applyUserReadOnlyColumnPermissions();
+    applyUserColumnVisibility();
 
     document.querySelectorAll(".status-select").forEach(select => {
       hydrateStatusSelect(select);
@@ -1418,6 +1426,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderModelOptions();
   renderEventOptions();
   applyRolePermissions();
+  applyUserColumnVisibility();
 
   modelSelect?.addEventListener("change", () => {
     switchModel(modelSelect.value);

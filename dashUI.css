@@ -302,18 +302,3 @@ h1 {
 }
 
 
-.due-search-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: -4px 0 12px;
-  flex-wrap: wrap;
-}
-
-.due-search-wrap input {
-  border: 1px solid var(--dash-border);
-  border-radius: 8px;
-  padding: 6px 10px;
-  min-width: 220px;
-}
