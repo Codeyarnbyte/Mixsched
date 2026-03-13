@@ -602,10 +602,20 @@ div[style*="margin: 10px 0;"] {
     padding: 4px;
   }
 
-  .status-select {
+  .status-select,
+  .pic-select,
+  .event-select,
+  .pfmea-select,
+  .qcp-select {
     appearance: none;
     border: none;
     background: transparent;
+    pointer-events: none;
+  }
+
+  #printTableBtn,
+  #exportExcelBtn {
+    display: none !important;
   }
 }
 
@@ -665,7 +675,8 @@ div[style*="margin: 10px 0;"] {
 }
 
 .event-select,
-.include-select {
+.pfmea-select,
+  .qcp-select {
   width: 100%;
   border: none;
   background: transparent;
@@ -855,4 +866,108 @@ td, th {
 
 #mainTable th {
   background: #e2e8f0 !important;
+}
+
+.access-badge {
+  width: fit-content;
+  margin: -8px 0 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+}
+
+.access-badge.admin {
+  background: #e8f1ff;
+  color: #0b66c3;
+}
+
+.access-badge.user {
+  background: #fff4e5;
+  color: #b45309;
+}
+
+.readonly-select {
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+
+body.user-mode .w-pfmea,
+body.user-mode .w-qcp,
+body.user-mode .pfmea-cell,
+body.user-mode .qcp-cell {
+  display: none !important;
+}
+
+
+.admin-column-header {
+  display: none;
+  margin: 6px 0 10px;
+  border: 1px solid #4b5563;
+  background: #c7ccd4;
+  overflow-x: auto;
+  grid-template-columns: 70px 170px 170px 130px 280px 280px 180px 130px 280px 100px 110px 100px 120px 120px 120px 120px;
+}
+
+body.admin-mode .admin-column-header {
+  display: grid;
+}
+
+.admin-column-header > div {
+  border-right: 1px solid #4b5563;
+  border-bottom: 1px solid #4b5563;
+  min-height: 80px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.admin-column-header .group {
+  flex-direction: column;
+  padding: 0;
+}
+
+.admin-column-header .group > span {
+  padding: 6px 4px;
+  border-bottom: 1px solid #4b5563;
+  width: 100%;
+}
+
+.admin-column-header .subcols {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.admin-column-header .subcols span {
+  border-right: 1px solid #4b5563;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-weight: 700;
+}
+
+.admin-column-header .subcols span:last-child {
+  border-right: none;
+}
+
+
+/* Admin custom header replaces default table header */
+body.admin-mode #mainTable thead {
+  display: none;
+}
+
+/* Keep default table header for users */
+body.user-mode #mainTable thead {
+  display: table-header-group;
 }

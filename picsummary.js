@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusDetailPanel = document.getElementById("statusDetailPanel");
   const statusDetailTitle = document.getElementById("statusDetailTitle");
   const statusDetailList = document.getElementById("statusDetailList");
+  const picDueNotice = document.getElementById("picDueNotice");
 
   function getModelsKey(maker) {
     return `NPRA_MODELS_${maker}`;
@@ -54,6 +55,19 @@ document.addEventListener("DOMContentLoaded", () => {
   function normalizeStatus(value) {
     if (value === "Close") return "Closed";
     return value;
+  }
+
+
+  function parseDateOnly(value) {
+    if (!value) return null;
+    const d = new Date(value);
+    if (isNaN(d)) return null;
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function isResolvedStatus(status) {
+    return ["Closed", "Cancelled", "Rejected"].includes(status);
   }
 
   function getSelectValue(select, dataKey, fallback = "") {
@@ -256,6 +270,64 @@ document.addEventListener("DOMContentLoaded", () => {
     return [...summary.values()].sort((a, b) => (`${a.event}|${a.pic}`).localeCompare(`${b.event}|${b.pic}`));
   }
 
+  function collectDueByPic() {
+    const maker = makerFilter.value;
+    const model = modelFilter.value;
+    const selectedEvent = eventFilter?.value || "";
+    if (!maker || !model) return [];
+
+    const html = localStorage.getItem(buildStorageKey(maker, model));
+    if (!html) return [];
+
+    const temp = document.createElement("tbody");
+    temp.innerHTML = html;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const counts = new Map();
+    let currentEvent = "";
+
+    Array.from(temp.querySelectorAll("tr")).forEach(row => {
+      const statusSelect = row.querySelector(".status-select");
+      const picSelect = row.querySelector(".pic-select");
+      const targetCell = row.querySelector(".target-date");
+      if (!statusSelect || !picSelect || !targetCell) return;
+
+      const eventSelect = row.querySelector(".event-select");
+      if (eventSelect) currentEvent = getSelectValue(eventSelect, "event", "").trim();
+      const event = currentEvent || "No event";
+      if (selectedEvent && event !== selectedEvent) return;
+
+      const status = normalizeStatus(getSelectValue(statusSelect, "status", "—"));
+      if (isResolvedStatus(status)) return;
+
+      const target = parseDateOnly(targetCell.dataset.raw || "");
+      if (!target || target > today) return;
+
+      const pic = getSelectValue(picSelect, "pic", "—");
+      if (!pic || pic === "—") return;
+
+      counts.set(pic, (counts.get(pic) || 0) + 1);
+    });
+
+    return [...counts.entries()].map(([pic, due]) => ({ pic, due })).sort((a, b) => b.due - a.due || a.pic.localeCompare(b.pic));
+  }
+
+  function renderDueNotice() {
+    if (!picDueNotice) return;
+    const dueRows = collectDueByPic();
+    picDueNotice.hidden = false;
+
+    if (!dueRows.length) {
+      picDueNotice.textContent = "✅ No PIC currently has overdue target-date items for the selected filters.";
+      return;
+    }
+
+    const list = dueRows.map(row => `${row.pic} (${row.due})`).join(", ");
+    picDueNotice.textContent = `⚠️ PIC with due/past target dates: ${list}.`;
+  }
+
   function clearStatusDetails() {
     statusDetailPanel.hidden = true;
     statusDetailList.innerHTML = "";
@@ -292,6 +364,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const rows = collectSummary();
     tbody.innerHTML = "";
     clearStatusDetails();
+    renderDueNotice();
 
     if (!rows.length) {
       const tr = document.createElement("tr");
