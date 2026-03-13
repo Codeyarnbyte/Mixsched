@@ -960,3 +960,14 @@ body.admin-mode .admin-column-header {
 .admin-column-header .subcols span:last-child {
   border-right: none;
 }
+
+
+/* Admin custom header replaces default table header */
+body.admin-mode #mainTable thead {
+  display: none;
+}
+
+/* Keep default table header for users */
+body.user-mode #mainTable thead {
+  display: table-header-group;
+}
