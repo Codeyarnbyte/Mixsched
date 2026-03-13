@@ -901,3 +901,62 @@ body.user-mode .pfmea-cell,
 body.user-mode .qcp-cell {
   display: none !important;
 }
+
+
+.admin-column-header {
+  display: none;
+  margin: 6px 0 10px;
+  border: 1px solid #4b5563;
+  background: #c7ccd4;
+  overflow-x: auto;
+  grid-template-columns: 70px 170px 170px 130px 280px 280px 180px 130px 280px 100px 110px 100px 120px 120px 120px 120px;
+}
+
+body.admin-mode .admin-column-header {
+  display: grid;
+}
+
+.admin-column-header > div {
+  border-right: 1px solid #4b5563;
+  border-bottom: 1px solid #4b5563;
+  min-height: 80px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.admin-column-header .group {
+  flex-direction: column;
+  padding: 0;
+}
+
+.admin-column-header .group > span {
+  padding: 6px 4px;
+  border-bottom: 1px solid #4b5563;
+  width: 100%;
+}
+
+.admin-column-header .subcols {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.admin-column-header .subcols span {
+  border-right: 1px solid #4b5563;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-weight: 700;
+}
+
+.admin-column-header .subcols span:last-child {
+  border-right: none;
+}
